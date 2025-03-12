@@ -2,7 +2,7 @@ name: Periodic Django Management Commands
 
 on:
   schedule:
-    - cron: "0 */12 * * *"  # Runs at 0th min past every 12 hours
+    - cron: "0 0 * 1 FRI"
   workflow_dispatch:
 
 jobs:
