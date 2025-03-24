@@ -1,0 +1,313 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amherst Connect - Events</title>
+    <link href="https://cdn.jsdelivr.net/npm/slim-select@2.8.1/dist/slimselect.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'access_amherst_algo/css/styles.css' %}">
+    <style>
+        .site-title {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .site-title:hover {
+            opacity: 0.9;
+        }
+
+        /* Add to styles.css */
+        .filter-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto auto;
+            gap: 15px;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .search-input,
+        .ss-main {  /* SlimSelect container class */
+            height: 36px;
+        }
+
+        .date-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .date-input {
+            width: 130px;
+            height: 36px;
+            padding: 5px;
+        }
+
+        .filter-button {
+            height: 36px;
+            align-self: flex-end;
+            padding: 0 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .content-area {
+            margin-top: calc(var(--header-height) + var(--filter-height) + 40px);
+            padding: 0 20px;
+        }
+        
+        .filter-section {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            background-color: rgb(255, 255, 255);
+            padding: 10px;
+            box-shadow: 0 10px 4px rgba(0,0,0,0.1);
+            z-index: 999;
+            height: auto;
+        }
+
+        .event-item {
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+        }
+
+        .event-emojis {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 6px 12px;
+            border-radius: 25px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 2;
+        }
+        
+        .emoji {
+            display: inline-block;
+            font-size: 1.3rem;
+            margin: 0 2px;
+            line-height: 1;
+            vertical-align: middle;
+        }
+
+        .date-section {
+            margin-bottom: 40px;
+        }
+        
+        .date-header {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 1.5rem;
+            border-radius: 4px;
+            width: 100%;
+        }
+        
+        /* Optional hover effect */
+        .event-emojis:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .filter-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .filter-button {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .filter-container {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .filter-group {
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .filter-label {
+                margin: 8px 0;
+            }
+
+            .date-input {
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .filter-button {
+                width: 100%;
+                overflow: hidden;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <a href="{% url 'home' %}" class="site-title">Amherst Connect</a>
+        <nav class="nav-buttons">
+            <a href="{% url 'map' %}" class="nav-button">Map</a>
+            <a href="{% url 'dashboard' %}" class="nav-button">Dashboard</a>
+            <a href="{% url 'calendar' %}" class="nav-button">Calendar</a>
+            <a href="{% url 'about' %}" class="nav-button">About</a>
+        </nav>
+    </header>
+
+    <!-- Filter Section -->
+    <section class="filter-section">
+        <button class="filter-toggle" onclick="toggleFilter()">Expand Search Filter</button>
+        <div id="filterContainer">
+            <form method="GET" action="" class="filter-container">
+                <div class="filter-group">
+                    <label class="filter-label"><b>Search Events</b></label>
+                    <input type="text" class="search-input" name="query" placeholder="Search..." value="{{ query }}">
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label"><b>Location</b></label>
+                    <select id="location-select" name="locations" multiple>
+                        {% for location in unique_locations %}
+                            <option value="{{ location }}" {% if location in selected_locations %}selected{% endif %}>
+                                {{ location }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label"><b>Category</b></label>
+                    <select id="category-select" name="categories" multiple>
+                        {% for category in unique_categories %}
+                            <option value="{{ category }}" {% if category in selected_categories %}selected{% endif %}>
+                                {{ category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label"><b>Date Range</b></label>
+                    <div class="date-group">
+                        <input type="date" class="date-input" name="start_date" value="{{ start_date }}" placeholder="Start Date">
+                        <input type="date" class="date-input" name="end_date" value="{{ end_date }}" placeholder="End Date">
+                    </div>
+                </div>
+
+                <button type="submit" class="filter-button">Apply Filters</button>
+            </form>
+            <a id="collapse-toggle" onClick="toggleFilter()"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg></a>
+        </div>
+    </section>
+
+    <!-- Content Area -->
+    <main class="content-area">
+        {% if events_by_date %}
+            {% for date, events in events_by_date.items %}
+                <div class="date-section">
+                    <h2 class="date-header">{{ date_labels|get_item:date }}</h2>
+                    <div class="event-grid">
+                        {% for event in events %}
+                        <article class="event-item">
+                            {% load tz %}
+                            <img class="event-image" src="{% if event.picture_link %}{{ event.picture_link }}{% else %}https://logodix.com/logo/1182384.png{% endif %}" alt="Event image">
+                            <div class="event-content">
+                                <h2 class="event-title">{{ event.title }}</h2>
+                                <div class="event-info"><strong>Time:</strong> {{ event.start_time|localtime|date:"g:i A" }}</div>
+                                <div class="event-info"><strong>Location:</strong> {{ event.location }}</div>
+                                <div class="event-links">
+                                    <a href="{{ event.link }}" class="event-link">More Info</a>
+                                    <a href="https://www.google.com/calendar/render?action=TEMPLATE&text={{ event.title|urlencode }}&dates={{ event.start_time|localtime|date:"Ymd\\THis" }}/{{ event.end_time|localtime|date:"Ymd\\THis" }}&details={{ event.description|urlencode }}%0A%0AMore information: {{ event.link|urlencode }}&location={{ event.location|urlencode }}" 
+                                        target="_blank" 
+                                        class="calendar-link">
+                                        Add to Calendar
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="event-emojis">
+                                {% for emoji in event.emojis %}
+                                    <span class="emoji">{{ emoji }}</span>
+                                {% endfor %}
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No events found.</p>
+        {% endif %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/slim-select@2.8.1/dist/slimselect.min.js"></script>
+    <script>
+        var filterContainer = document.getElementById('filterContainer');
+        var collapseToggle = document.getElementById('collapse-toggle');
+
+        function toggleFilter() {
+            if (filterContainer.style.display === 'none' || filterContainer.style.display === '') {
+                filterContainer.style.display = 'flex';
+                filterContainer.style.flexDirection = "column";
+                collapseToggle.style.display = 'block';
+            } else {
+                filterContainer.style.display = 'none';
+                collapseToggle.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 768) {
+                filterContainer.style.display = 'none';
+                collapseToggle.style.display = 'none';
+            }
+            else {
+                filterContainer.style.display = 'grid';
+                collapseToggle.style.display = 'none';
+            }
+        });
+
+        // Initialize SlimSelect for better multi-select dropdowns
+        new SlimSelect({
+            select: '#location-select',
+            settings: {
+                placeholderText: 'Select locations...',
+                allowDeselect: true
+            }
+        });
+
+        new SlimSelect({
+            select: '#category-select',
+            settings: {
+                placeholderText: 'Select categories...',
+                allowDeselect: true
+            }
+        });
+    </script>
+</body>
+</html>

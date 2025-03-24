@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amherst Connect - Map</title>
+    <link rel="stylesheet" href="{% static 'access_amherst_algo/css/styles.css' %}">
+    <style>
+        .site-title {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .site-title:hover {
+            opacity: 0.9;
+        }
+
+        /* Keep only map-specific styles */
+        #map {
+            flex: 1;
+            margin-top: var(--header-height);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+    </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L00WJ9XVMH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-L00WJ9XVMH');
+    </script>
+</head>
+<body>
+    <header class="main-header">
+        <a href="{% url 'home' %}" class="site-title">Amherst Connect</a>
+        <nav class="nav-buttons">
+            <a href="{% url 'home' %}" class="nav-button">Events</a>
+            <a href="{% url 'dashboard' %}" class="nav-button">Dashboard</a>
+            <a href="{% url 'calendar' %}" class="nav-button">Calendar</a>
+            <a href="{% url 'about' %}" class="nav-button">About</a>
+        </nav>
+    </header>
+
+    <div id="map">
+        {{ map_html|safe }}
+    </div>
+</body>
+</html>

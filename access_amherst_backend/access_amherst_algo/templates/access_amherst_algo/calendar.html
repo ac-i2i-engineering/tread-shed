@@ -1,0 +1,294 @@
+{% load custom_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amherst Connect - Calendar</title>
+    <link rel="stylesheet" href="{% static 'access_amherst_algo/css/styles.css' %}">
+    <style>
+        .site-title {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .site-title:hover {
+            opacity: 0.9;
+        }
+
+        /* Grid Layout */
+        .calendar-container {
+            margin: calc(var(--header-height) + 10px) auto 0;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            grid-template-columns: var(--time-column-width) repeat(3, 1fr);
+            gap: 1px;
+            width: 100%;
+            max-width: 98vw;
+            height: calc(100vh - var(--header-height) - 20px);
+            padding: 0 10px;
+            border: 1px solid var(--border-color);
+            background: var(--border-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow-y: auto;
+            overflow-x: auto; /* Changed from hidden to allow horizontal scroll */
+        }
+    
+        /* Header Styles */
+        .day-header {
+            background: var(--background-color);
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            height: fit-content;
+        }
+    
+        .day-name {
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 4px;
+            color: var(--primary-color);
+        }
+    
+        .day-date {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    
+        /* Time Column */
+        .time-column {
+            background: var(--background-color);
+            position: sticky;
+            left: 0;
+            z-index: 2;
+        }
+    
+        .time-column[aria-hidden="true"] {
+            border-bottom: 2px solid var(--border-color);
+        }
+    
+        .time-slot {
+            height: 45px;
+            padding: 2px 8px;
+            text-align: right;
+            font-size: 0.75rem;
+            color: #666;
+            background: var(--background-color);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+    
+        /* Day Column */
+        .day-column {
+            position: relative;
+            background: white;
+            min-height: 45px;
+            border-bottom: 1px solid var(--border-color);
+        }
+    
+        /* Event Blocks */
+        .event-block {
+            position: absolute;
+            padding: 4px 6px;
+            background-color: var(--primary-color);
+            color: var(--event-text);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            width: calc((100% - 4px) / var(--columns));
+            left: calc(var(--column) * (100% / var(--columns)));
+            opacity: 0.9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+    
+        /* Event Colors */
+        .event-block:nth-child(7n+1) { background-color: #4CAF50; }
+        .event-block:nth-child(7n+2) { background-color: #2196F3; }
+        .event-block:nth-child(7n+3) { background-color: #9C27B0; }
+        .event-block:nth-child(7n+4) { background-color: #FF9800; }
+        .event-block:nth-child(7n+5) { background-color: #E91E63; }
+        .event-block:nth-child(7n+6) { background-color: #00BCD4; }
+        .event-block:nth-child(7n+7) { background-color: #FF5722; }
+    
+        /* Event Content */
+        .event-title {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+    
+        .event-time, 
+        .event-location {
+            font-size: 0.7rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    
+        .event-block,
+        .event-block *,
+        .event-title,
+        .event-time,
+        .event-location {
+            color: white !important;
+        }
+    
+        /* Event Hover Effects */
+        .event-block:hover {
+            opacity: 1;
+            z-index: 1000;
+            transform: scale(1.05);
+            width: 250px;
+            height: auto !important;
+            min-height: var(--original-height);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border: 2px solid #fff;
+            padding: 8px;
+        }
+    
+        .event-block:hover .event-title,
+        .event-block:hover .event-time,
+        .event-block:hover .event-location {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+            margin-bottom: 4px;
+        }
+    
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .calendar-container {
+                grid-template-columns: var(--time-column-width) repeat(3, minmax(200px, 1fr));
+                max-width: 100vw;
+                padding: 0;
+                margin-top: calc(var(--header-height) + 5px);
+                border-radius: 0;
+            }
+        
+            .event-block {
+                min-width: 100px; /* Ensure minimum width for events */
+            }
+        
+            .event-block:hover {
+                width: 200px; /* Smaller hover width on mobile */
+            }
+        
+            .time-column {
+                position: sticky;
+                left: 0;
+                z-index: 2;
+                background: var(--background-color);
+            }
+        
+            .day-header {
+                position: sticky;
+                top: 0;
+                min-width: 200px;
+            }
+        
+            .day-name {
+                font-size: 0.9rem;
+            }
+        
+            .day-date {
+                font-size: 0.8rem;
+            }
+        
+            .time-slot {
+                font-size: 0.7rem;
+                padding: 2px 4px;
+            }
+        
+            .event-title {
+                font-size: 0.7rem;
+            }
+        
+            .event-time,
+            .event-location {
+                font-size: 0.6rem;
+            }
+        }
+
+        /* Additional small screen optimizations */
+        @media (max-width: 480px) {
+            .calendar-container {
+                --time-column-width: 60px;
+            }
+
+            .event-block:hover {
+                width: 150px;
+            }
+        }
+    </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L00WJ9XVMH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-L00WJ9XVMH');
+    </script>    
+</head>
+<body>
+    <!-- Navigation buttons -->
+    <header class="main-header">
+        <a href="{% url 'home' %}" class="site-title">Amherst Connect</a>
+        <nav class="nav-buttons">
+            <a href="{% url 'home' %}" class="nav-button">Events</a>
+            <a href="{% url 'map' %}" class="nav-button">Map</a>
+            <a href="{% url 'dashboard' %}" class="nav-button">Dashboard</a>
+            <a href="{% url 'about' %}" class="nav-button">About</a>
+        </nav>
+    </header>
+
+    <main class="calendar-container">
+        <!-- Add specific class for the empty corner cell -->
+        <div class="time-column corner-cell" aria-hidden="true"></div>
+        {% for day in days_of_week %}
+            <div class="day-header" role="columnheader">
+                <span class="day-name">{{ day|date:"l" }}</span>
+                <span class="day-date">{{ day|date:"M d" }}</span>
+            </div>
+        {% endfor %}
+
+        <div class="time-column">
+            {% for time in times %}
+                <div class="time-slot" role="rowheader">
+                    {{ time|time:"g:i A" }}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% for day in days_of_week %}
+            <div class="day-column" role="gridcell">
+                {% with day_str=day|date:"Y-m-d" %}
+                    {% for event in events_by_day|get_item:day_str %}
+                        <div class="event-block" 
+                             style="top: {{ event.top }}px; 
+                                    height: {{ event.height }}px;
+                                    --columns: {{ event.columns }};
+                                    --column: {{ event.column }};"
+                             role="article"
+                             aria-label="{{ event.title }} from {{ event.start_time|time:'g:i A' }} to {{ event.end_time|time:'g:i A' }}">
+                            <div class="event-title">{{ event.title }}</div>
+                            <div class="event-time">{{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}</div>
+                            <div class="event-location">{{ event.location }}</div>
+                        </div>
+                    {% endfor %}
+                {% endwith %}
+            </div>
+        {% endfor %}
+    </main>
+</body>
+</html>
