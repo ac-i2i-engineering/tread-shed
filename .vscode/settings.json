@@ -1,7 +1,0 @@
-{
-    "python.testing.pytestArgs": [
-        "access_amherst_backend"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
-}

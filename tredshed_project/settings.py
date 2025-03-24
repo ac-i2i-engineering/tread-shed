@@ -39,12 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Local apps
-    'apps.accounts.apps.AccountsConfig',
-    'apps.bikes.apps.BikesConfig',
-    'apps.volunteer.apps.VolunteerConfig',
-    'apps.education.apps.EducationConfig',
-    'apps.pages.apps.PagesConfig',
-    'apps.events.apps.EventsConfig',
+    'accounts.apps.AccountsConfig',
+    'bikes.apps.BikesConfig',
+    'volunteer.apps.VolunteerConfig',
+    'education.apps.EducationConfig',
+    'pages.apps.PagesConfig',
+    'events.apps.EventsConfig',
 ]
 
 MIDDLEWARE = [
@@ -62,7 +62,7 @@ ROOT_URLCONF = 'tredshed_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Add templates directory
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
